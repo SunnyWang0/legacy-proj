@@ -7,6 +7,6 @@ Response: what the psychologist responded with
 Build an llm based application that takes in the patient's message or details and outputs a suggestion on how to best help the patient.
 
 Use next front end. 
-
+Store the train.csv data in a vector database in cloudflare. Use the llama model in cloudflare for the llm.
 
 
