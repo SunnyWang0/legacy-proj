@@ -1,1 +1,15 @@
 The training data is a dataset of mental health counseling transcripts.
+2 columns: context, and response
+
+Context: what the patient said
+Response: what the psychologist responded with
+
+Goal: 
+
+
+
+
+
+
+
+
