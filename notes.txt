@@ -1,9 +1,0 @@
-sunnywang@Sunnys-MacBook-Pro legacy-proj % git init
-Initialized empty Git repository in /Users/sunnywang/Desktop/legacy-proj/.git/
-sunnywang@Sunnys-MacBook-Pro legacy-proj % git remote add origin https://github.com/SunnyWang0/legacy-proj.git
-sunnywang@Sunnys-MacBook-Pro legacy-proj % git branch -M main
-sunnywang@Sunnys-MacBook-Pro legacy-proj % git push -u origin main
-error: src refspec main does not match any
-error: failed to push some refs to 'https://github.com/SunnyWang0/legacy-proj.git'
-sunnywang@Sunnys-MacBook-Pro legacy-proj % 
-
