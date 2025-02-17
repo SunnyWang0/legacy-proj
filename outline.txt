@@ -4,6 +4,8 @@ The training data is a dataset of mental health counseling transcripts.
 Context: what the patient said
 Response: what the psychologist responded with
 
+Build an llm based application that takes in the patient's message or details and outputs a suggestion on how to best help the patient.
+
 
 
 
