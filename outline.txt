@@ -4,8 +4,6 @@ The training data is a dataset of mental health counseling transcripts.
 Context: what the patient said
 Response: what the psychologist responded with
 
-Goal: 
-
 
 
 
