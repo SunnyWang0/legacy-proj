@@ -9,4 +9,6 @@ Build an llm based application that takes in the patient's message or details an
 Use next front end. 
 Store the train.csv data in a vector database in cloudflare. Use the llama model in cloudflare for the llm.
 
+When generating the response, use a RAG pipeline to pull the most relevant response from the vector database and attach it to the prompt
+
 
