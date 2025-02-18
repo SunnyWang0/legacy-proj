@@ -12,7 +12,6 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isThinking, setIsThinking] = useState(false);
   const [inputValue, setInputValue] = useState('');
-  const [currentStreamingMessage, setCurrentStreamingMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -21,7 +20,7 @@ export default function Home() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, currentStreamingMessage]);
+  }, [messages]);
 
   const handleSendMessage = async (message: string) => {
     if (!message.trim()) return;
@@ -35,7 +34,6 @@ export default function Home() {
     setMessages((prev) => [...prev, newMessage]);
     setInputValue('');
     setIsThinking(true);
-    setCurrentStreamingMessage('');
 
     try {
       const response = await fetch('/api/chat', {
@@ -50,29 +48,13 @@ export default function Home() {
         throw new Error('Failed to get response');
       }
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-
-      if (!reader) {
-        throw new Error('No reader available');
-      }
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          // Add the complete message to the messages array
-          const assistantMessage = {
-            text: currentStreamingMessage,
-            isUser: false,
-            timestamp: new Date(),
-          };
-          setMessages((prev) => [...prev, assistantMessage]);
-          setCurrentStreamingMessage('');
-          break;
-        }
-        const chunk = decoder.decode(value);
-        setCurrentStreamingMessage((prev) => prev + chunk);
-      }
+      const data = await response.json();
+      const assistantMessage = {
+        text: data.response,
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Error:', error);
       const errorMessage = {
@@ -152,14 +134,7 @@ export default function Home() {
                 </div>
               </div>
             ))}
-            {currentStreamingMessage && (
-              <div className="flex justify-start">
-                <div className="max-w-[80%] rounded-lg bg-white px-4 py-2 text-gray-800 shadow-sm">
-                  <p>{currentStreamingMessage}</p>
-                </div>
-              </div>
-            )}
-            {isThinking && !currentStreamingMessage && (
+            {isThinking && (
               <div className="flex justify-start">
                 <div className="flex space-x-2 rounded-lg bg-white px-4 py-3 shadow-sm">
                   <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400" />
