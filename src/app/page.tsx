@@ -8,8 +8,19 @@ interface Message {
   timestamp: Date;
 }
 
+interface ChatMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+const SYSTEM_PROMPT: ChatMessage = {
+  role: 'system',
+  content: 'You are a helpful and empathetic mental health assistant. Provide supportive and constructive responses while maintaining appropriate boundaries and encouraging professional help when necessary.'
+};
+
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([SYSTEM_PROMPT]);
   const [isThinking, setIsThinking] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -20,6 +31,7 @@ export default function Home() {
 
   const handleClearChat = () => {
     setMessages([]);
+    setChatHistory([SYSTEM_PROMPT]);
   };
 
   useEffect(() => {
@@ -39,6 +51,13 @@ export default function Home() {
     setInputValue('');
     setIsThinking(true);
 
+    // Add user message to chat history
+    const userMessage: ChatMessage = {
+      role: 'user',
+      content: message
+    };
+    setChatHistory(prev => [...prev, userMessage]);
+
     // Add a placeholder message for the AI response
     const placeholderMessage = {
       text: '',
@@ -53,7 +72,9 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ 
+          messages: chatHistory
+        }),
       });
 
       if (!response.ok) {
@@ -68,6 +89,12 @@ export default function Home() {
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
+          // Add assistant's complete message to chat history
+          const assistantMessage: ChatMessage = {
+            role: 'assistant',
+            content: accumulatedText
+          };
+          setChatHistory(prev => [...prev, assistantMessage]);
           console.log('Stream completed');
           break;
         }
@@ -122,7 +149,7 @@ export default function Home() {
         isUser: false,
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages((prev) => [...prev.slice(0, -1), errorMessage]);
     } finally {
       setIsThinking(false);
     }

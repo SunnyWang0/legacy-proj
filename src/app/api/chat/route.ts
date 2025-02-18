@@ -2,25 +2,14 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { message } = await request.json();
+    const { messages } = await request.json();
 
-    const response = await fetch("https://backend.unleashai-inquiries.workers.dev", {
+    const response = await fetch("https://backend.unleashai-inquiries.workers.dev/api/chat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        messages: [
-          {
-            role: "system",
-            content: "You are a helpful and empathetic mental health assistant. Provide supportive and constructive responses while maintaining appropriate boundaries and encouraging professional help when necessary."
-          },
-          {
-            role: "user",
-            content: message
-          }
-        ]
-      }),
+      body: JSON.stringify({ messages }),
     });
 
     if (!response.ok) {

@@ -93,33 +93,25 @@ export default {
 		// Handle chat endpoint
 		if (url.pathname === '/api/chat') {
 			try {
-				const body = await request.json() as { 
-					message?: string; 
-					messages?: Array<{ role: string; content: string }> 
+				const { messages } = await request.json() as { 
+					messages: Array<{ role: string; content: string }> 
 				};
-				
-				let messages: Array<{ role: string; content: string }>;
-				
-				// Handle both formats: direct message string or messages array
-				if (typeof body.message === 'string') {
-					messages = [
-						{
-							role: "system",
-							content: "You are a helpful and empathetic mental health assistant. Provide supportive and constructive responses while maintaining appropriate boundaries and encouraging professional help when necessary."
-						},
-						{
-							role: "user",
-							content: body.message
-						}
-					];
-				} else if (Array.isArray(body.messages)) {
-					messages = body.messages;
-				} else {
-					throw new Error('Invalid request format');
+
+				// Validate messages array
+				if (!Array.isArray(messages) || messages.length === 0) {
+					throw new Error('Invalid messages format');
+				}
+
+				// Ensure the first message is a system prompt
+				if (messages[0].role !== 'system') {
+					messages.unshift({
+						role: 'system',
+						content: 'You are a helpful and empathetic mental health assistant. Provide supportive and constructive responses while maintaining appropriate boundaries and encouraging professional help when necessary.'
+					});
 				}
 
 				const response = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
-					messages: messages,
+					messages,
 					stream: true
 				});
 
