@@ -1,31 +1,28 @@
 {
-  "name": "mental-health-assistant",
+  "name": "legacy-proj",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "upload-data": "node scripts/upload_data.js"
+    "lint": "next lint"
   },
   "dependencies": {
-    "form-data": "^4.0.0",
-    "next": "14.1.0",
-    "node-fetch": "^3.3.2",
-    "react": "^18",
-    "react-dom": "^18"
+    "@assistant-ui/react": "^0.7.83",
+    "next": "15.1.7",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3",
     "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "autoprefixer": "^10.0.1",
-    "eslint": "^8",
-    "eslint-config-next": "14.1.0",
+    "@types/react": "^19.0.9",
+    "@types/react-dom": "^19.0.3",
+    "eslint": "^9",
+    "eslint-config-next": "15.1.7",
     "postcss": "^8",
-    "tailwindcss": "^3.3.0",
+    "tailwindcss": "^3.4.1",
     "typescript": "^5"
   }
 }
