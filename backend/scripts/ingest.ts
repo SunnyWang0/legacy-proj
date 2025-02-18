@@ -26,7 +26,7 @@ async function ingestData() {
     }));
 
     // Send the data to the ingest endpoint in batches
-    const BATCH_SIZE = 10; // Reduced batch size to avoid overwhelming the server
+    const BATCH_SIZE = 5; // Further reduced batch size
     const API_URL = 'https://backend.unleashai-inquiries.workers.dev';
     
     console.log(`Found ${transformedRecords.length} records to process`);
@@ -34,6 +34,7 @@ async function ingestData() {
     for (let i = 0; i < transformedRecords.length; i += BATCH_SIZE) {
       const batch = transformedRecords.slice(i, Math.min(i + BATCH_SIZE, transformedRecords.length));
       console.log(`Processing batch ${i / BATCH_SIZE + 1} of ${Math.ceil(transformedRecords.length / BATCH_SIZE)}`);
+      console.log('First entry in batch:', JSON.stringify(batch[0], null, 2));
       
       try {
         const response = await fetch(`${API_URL}/api/ingest`, {
@@ -46,16 +47,17 @@ async function ingestData() {
           })
         });
         
+        const responseText = await response.text();
+        console.log(`Server response for batch ${i / BATCH_SIZE + 1}:`, responseText);
+        
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Server response:', errorText);
-          throw new Error(`Failed to ingest batch: ${errorText}`);
+          throw new Error(`Failed to ingest batch: ${responseText}`);
         }
         
         console.log(`Successfully processed batch ${i / BATCH_SIZE + 1}`);
         
         // Add a small delay between batches to avoid overwhelming the server
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Increased delay to 2 seconds
+        await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (error) {
         console.error(`Error processing batch ${i / BATCH_SIZE + 1}:`, error);
         process.exit(1);

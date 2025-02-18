@@ -29,7 +29,7 @@ export interface Env {
 
 // Function to encode text into embeddings using the AI model
 async function getEmbeddings(text: string, env: Env): Promise<number[]> {
-	const response = await env.AI.run('@cf/baai/bge-base-en-v1.5', {
+	const response = await env.AI.run('@cf/baai/bge-large-en-v1.5', {
 		text: [text]
 	});
 	
@@ -55,9 +55,11 @@ export default {
 		// Handle vector database ingestion
 		if (url.pathname === '/api/ingest') {
 			try {
+				console.log('Starting ingest process...');
 				const { entries } = await request.json() as { entries: Array<{ context: string; response: string }> };
 				
 				if (!Array.isArray(entries) || entries.length === 0) {
+					console.error('Invalid entries format:', entries);
 					return new Response(JSON.stringify({ error: 'Invalid entries format or empty array' }), {
 						status: 400,
 						headers: { 'Content-Type': 'application/json' }
@@ -67,10 +69,13 @@ export default {
 				console.log(`Processing ${entries.length} entries...`);
 				
 				try {
+					console.log('Starting to generate embeddings...');
 					const vectors = await Promise.all(
 						entries.map(async (entry, index) => {
 							try {
+								console.log(`Generating embedding for entry ${index}...`);
 								const contextEmbedding = await getEmbeddings(entry.context, env);
+								console.log(`Successfully generated embedding for entry ${index}`);
 								return {
 									id: `entry-${Date.now()}-${index}`,
 									values: contextEmbedding,
@@ -80,12 +85,13 @@ export default {
 									}
 								};
 							} catch (error) {
-								console.error('Error generating embedding:', error);
+								console.error(`Error generating embedding for entry ${index}:`, error);
 								throw new Error(error instanceof Error ? error.message : 'Unknown error generating embedding');
 							}
 						})
 					);
 					
+					console.log('All embeddings generated, upserting to vectorize...');
 					await env.VECTORIZE_DB.upsert(vectors);
 					console.log(`Successfully processed ${entries.length} entries`);
 					
