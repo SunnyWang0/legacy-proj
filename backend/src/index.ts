@@ -55,10 +55,27 @@ export default {
 							console.log('Received chunk:', value);
 							
 							// Ensure we have the correct structure and handle it properly
-							const chunk = value?.response || value;
-							if (chunk) {
+							let textChunk = '';
+							if (typeof value === 'string') {
+								textChunk = value;
+							} else if (value?.response) {
+								textChunk = value.response;
+							} else if (value && typeof value === 'object') {
+								// Handle case where value might be a Uint8Array or similar
+								const decoder = new TextDecoder();
+								try {
+									const decoded = decoder.decode(value);
+									const parsed = JSON.parse(decoded);
+									textChunk = parsed.response || parsed.text || decoded;
+								} catch (e) {
+									console.error('Error decoding chunk:', e);
+									textChunk = decoder.decode(value);
+								}
+							}
+
+							if (textChunk) {
 								// Format the SSE data properly
-								const sseData = `data: ${JSON.stringify({ text: chunk })}\n\n`;
+								const sseData = `data: ${JSON.stringify({ text: textChunk })}\n\n`;
 								console.log('Sending SSE data:', sseData);
 								await writer.write(new TextEncoder().encode(sseData));
 							}

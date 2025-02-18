@@ -52,12 +52,30 @@ export async function POST(request: Request) {
             for (const line of lines) {
               if (line.startsWith('data: ')) {
                 try {
-                  const data = line.slice(6);
-                  console.log('Processing SSE data:', data);
-                  // Forward the SSE data as is
-                  controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+                  const rawData = line.slice(6);
+                  console.log('Raw SSE data:', rawData);
+                  
+                  // Try to parse the data and extract the text
+                  const parsed = JSON.parse(rawData);
+                  console.log('Parsed data structure:', parsed);
+                  
+                  // Ensure we're forwarding a proper text string
+                  let textContent = '';
+                  if (typeof parsed.text === 'string') {
+                    textContent = parsed.text;
+                  } else if (parsed.text?.response) {
+                    textContent = parsed.text.response;
+                  } else if (typeof parsed.response === 'string') {
+                    textContent = parsed.response;
+                  }
+                  
+                  // Forward the properly formatted SSE data
+                  if (textContent) {
+                    console.log('Forwarding text content:', textContent);
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: textContent })}\n\n`));
+                  }
                 } catch (e) {
-                  console.error('Error processing SSE data:', e);
+                  console.error('Error processing SSE data:', e, 'Raw line:', line);
                 }
               }
             }

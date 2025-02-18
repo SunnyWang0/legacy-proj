@@ -80,8 +80,19 @@ export default function Home() {
               const data = JSON.parse(line.slice(6));
               console.log('Parsed SSE data:', data);
               
-              if (data.text) {
-                accumulatedText += data.text;
+              // Extract the text content properly
+              let textContent = '';
+              if (typeof data.text === 'string') {
+                textContent = data.text;
+              } else if (data.text?.response) {
+                textContent = data.text.response;
+              } else if (typeof data.response === 'string') {
+                textContent = data.response;
+              }
+              
+              if (textContent) {
+                console.log('Adding text content:', textContent);
+                accumulatedText += textContent;
                 console.log('Updated accumulated text:', accumulatedText);
                 
                 // Update the last message with the accumulated text
