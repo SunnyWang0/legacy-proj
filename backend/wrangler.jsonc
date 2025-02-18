@@ -26,7 +26,7 @@
 
   "vectorize": [{
     "binding": "VECTORIZE_DB",
-    "index_name": "mental-health-index"
+    "index_name": "legacy-db"
   }]
 
   /**

@@ -8,7 +8,8 @@
 		"start": "wrangler dev",
 		"test": "vitest",
 		"cf-typegen": "wrangler types",
-		"ingest": "tsx scripts/ingest.ts"
+		"ingest": "tsx scripts/ingest.ts",
+		"clear-db": "tsx scripts/clear-db.ts"
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.6.4",
