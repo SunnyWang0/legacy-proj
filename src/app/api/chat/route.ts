@@ -4,8 +4,7 @@ export async function POST(request: Request) {
   try {
     const { message } = await request.json();
 
-    // Using localhost:8787 which is Wrangler's default development server
-    const response = await fetch("http://localhost:8787", {
+    const response = await fetch("https://backend.unleashai-inquiries.workers.dev", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
