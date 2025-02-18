@@ -35,17 +35,37 @@ export default function Home() {
     setInputValue('');
     setIsThinking(true);
 
-    // TODO: Add API call to get response
-    // For now, we'll just add a mock response
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get response');
+      }
+
+      const data = await response.json();
       const assistantMessage = {
-        text: "I understand how you're feeling. Let me help you with that...",
+        text: data.response,
         isUser: false,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error('Error:', error);
+      const errorMessage = {
+        text: "I apologize, but I'm having trouble responding right now. Please try again later.",
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsThinking(false);
-    }, 1000);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
