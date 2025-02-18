@@ -18,6 +18,10 @@ export default function Home() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const handleClearChat = () => {
+    setMessages([]);
+  };
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -135,8 +139,18 @@ export default function Home() {
     <div className="flex h-screen flex-col bg-gray-50">
       {/* Header */}
       <header className="border-b border-gray-200 bg-white px-4 py-4 shadow-sm">
-        <h1 className="text-xl font-semibold text-gray-800">Legacy Demo Project</h1>
-        <p className="text-sm text-gray-600">Sunny Wang</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-gray-800">Legacy Demo Project</h1>
+            <p className="text-sm text-gray-600">Sunny Wang</p>
+          </div>
+          <button
+            onClick={handleClearChat}
+            className="rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
+          >
+            Clear Chat
+          </button>
+        </div>
       </header>
 
       {/* Chat Messages */}
