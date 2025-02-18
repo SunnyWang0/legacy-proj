@@ -65,18 +65,33 @@ export default {
 								const decoder = new TextDecoder();
 								try {
 									const decoded = decoder.decode(value);
-									const parsed = JSON.parse(decoded);
-									textChunk = parsed.response || parsed.text || decoded;
+									// Check if it's a [DONE] message
+									if (decoded.trim() === 'data: [DONE]') {
+										continue;
+									}
+									
+									// Parse the SSE data format
+									if (decoded.startsWith('data: ')) {
+										const jsonStr = decoded.slice(6);
+										const parsed = JSON.parse(jsonStr);
+										
+										// Extract only the response text, ignore metadata
+										if (parsed.response && typeof parsed.response === 'string') {
+											textChunk = parsed.response;
+										} else if (parsed.text && typeof parsed.text === 'string') {
+											textChunk = parsed.text;
+										}
+									}
 								} catch (e) {
 									console.error('Error decoding chunk:', e);
-									textChunk = decoder.decode(value);
+									continue;
 								}
 							}
 
 							if (textChunk) {
 								// Format the SSE data properly
 								const sseData = `data: ${JSON.stringify({ text: textChunk })}\n\n`;
-								console.log('Sending SSE data:', sseData);
+								console.log('Sending text chunk:', textChunk);
 								await writer.write(new TextEncoder().encode(sseData));
 							}
 						}
