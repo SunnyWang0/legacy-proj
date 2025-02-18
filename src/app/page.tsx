@@ -59,8 +59,8 @@ export default function Home() {
     <div className="flex h-screen flex-col bg-gray-50">
       {/* Header */}
       <header className="border-b border-gray-200 bg-white px-4 py-4 shadow-sm">
-        <h1 className="text-xl font-semibold text-gray-800">Mental Health Chat Assistant</h1>
-        <p className="text-sm text-gray-600">Your supportive AI companion</p>
+        <h1 className="text-xl font-semibold text-gray-800">Legacy Demo Project</h1>
+        <p className="text-sm text-gray-600">Sunny Wang</p>
       </header>
 
       {/* Chat Messages */}
@@ -137,7 +137,7 @@ export default function Home() {
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Type your message here..."
-              className="w-full resize-none rounded-lg border border-gray-300 bg-white px-4 py-2 pr-16 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="w-full resize-none rounded-lg border border-gray-300 bg-white px-4 py-2 pr-16 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               rows={1}
               disabled={isThinking}
             />
