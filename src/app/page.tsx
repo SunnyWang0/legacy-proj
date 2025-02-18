@@ -35,6 +35,14 @@ export default function Home() {
     setInputValue('');
     setIsThinking(true);
 
+    // Add a placeholder message for the AI response
+    const placeholderMessage = {
+      text: '',
+      isUser: false,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, placeholderMessage]);
+
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -48,13 +56,50 @@ export default function Home() {
         throw new Error('Failed to get response');
       }
 
-      const data = await response.json();
-      const assistantMessage = {
-        text: data.response,
-        isUser: false,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No reader available');
+
+      let accumulatedText = '';
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          console.log('Stream completed');
+          break;
+        }
+
+        // Decode the chunk and process it
+        const text = new TextDecoder().decode(value);
+        console.log('Received text chunk:', text);
+        
+        const lines = text.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              console.log('Parsed SSE data:', data);
+              
+              if (data.text) {
+                accumulatedText += data.text;
+                console.log('Updated accumulated text:', accumulatedText);
+                
+                // Update the last message with the accumulated text
+                setMessages((prev) => {
+                  const newMessages = [...prev];
+                  newMessages[newMessages.length - 1] = {
+                    ...newMessages[newMessages.length - 1],
+                    text: accumulatedText,
+                  };
+                  return newMessages;
+                });
+              }
+            } catch (e) {
+              console.error('Error parsing SSE data:', e, 'Line:', line);
+            }
+          }
+        }
+      }
     } catch (error) {
       console.error('Error:', error);
       const errorMessage = {

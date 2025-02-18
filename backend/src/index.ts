@@ -12,7 +12,7 @@
  */
 
 interface AIModel {
-	run(model: string, options: { messages: Array<{ role: string; content: string }> }): Promise<{ response: string }>;
+	run(model: string, options: { messages: Array<{ role: string; content: string }>, stream?: boolean }): Promise<ReadableStream | { response: string }>;
 }
 
 export interface Env {
@@ -28,16 +28,63 @@ export default {
 		try {
 			const body = await request.json() as { messages: Array<{ role: string; content: string }> };
 
-			// Call the Cloudflare AI model
+			// Create a new TransformStream for streaming
+			const stream = new TransformStream();
+			const writer = stream.writable.getWriter();
+			
+			// Start the AI stream
 			const response = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
-				messages: body.messages
+				messages: body.messages,
+				stream: true
 			});
 
-			return new Response(JSON.stringify({ response: response.response }), {
-				headers: {
-					'Content-Type': 'application/json'
-				}
-			});
+			// Process the streaming response
+			if (response instanceof ReadableStream) {
+				const reader = response.getReader();
+				(async () => {
+					try {
+						while (true) {
+							const { done, value } = await reader.read();
+							if (done) {
+								console.log('Stream completed');
+								await writer.close();
+								break;
+							}
+							
+							// Debug the incoming value
+							console.log('Received chunk:', value);
+							
+							// Ensure we have the correct structure and handle it properly
+							const chunk = value?.response || value;
+							if (chunk) {
+								// Format the SSE data properly
+								const sseData = `data: ${JSON.stringify({ text: chunk })}\n\n`;
+								console.log('Sending SSE data:', sseData);
+								await writer.write(new TextEncoder().encode(sseData));
+							}
+						}
+					} catch (error) {
+						console.error('Streaming error:', error);
+						await writer.abort(error);
+					}
+				})();
+
+				// Return the response as a server-sent event stream
+				return new Response(stream.readable, {
+					headers: {
+						'Content-Type': 'text/event-stream',
+						'Cache-Control': 'no-cache',
+						'Connection': 'keep-alive'
+					}
+				});
+			} else {
+				// Handle non-streaming response
+				return new Response(JSON.stringify({ response: response.response }), {
+					headers: {
+						'Content-Type': 'application/json'
+					}
+				});
+			}
 		} catch (error) {
 			console.error('Error:', error);
 			return new Response(JSON.stringify({ error: 'Failed to process request' }), {
