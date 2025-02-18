@@ -139,17 +139,9 @@ export default function Home() {
     <div className="flex h-screen flex-col bg-gray-50">
       {/* Header */}
       <header className="border-b border-gray-200 bg-white px-4 py-4 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-800">Legacy Demo Project</h1>
-            <p className="text-sm text-gray-600">Sunny Wang</p>
-          </div>
-          <button
-            onClick={handleClearChat}
-            className="rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
-          >
-            Clear Chat
-          </button>
+        <div>
+          <h1 className="text-xl font-semibold text-gray-800">Legacy Demo Project</h1>
+          <p className="text-sm text-gray-600">Sunny Wang</p>
         </div>
       </header>
 
@@ -221,7 +213,25 @@ export default function Home() {
       {/* Input Area */}
       <div className="border-t border-gray-200 bg-white p-4">
         <div className="mx-auto max-w-2xl">
-          <div className="relative flex items-center">
+          <div className="relative flex items-center gap-2">
+            <button
+              onClick={handleClearChat}
+              disabled={messages.length === 0}
+              className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
+              title="Clear chat"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                className="h-5 w-5"
+                strokeWidth={2}
+              >
+                <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path d="M15 12H9" />
+              </svg>
+            </button>
             <textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
