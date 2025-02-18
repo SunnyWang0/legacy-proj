@@ -213,12 +213,12 @@ export default function Home() {
       {/* Input Area */}
       <div className="border-t border-gray-200 bg-white p-4">
         <div className="mx-auto max-w-2xl">
-          <div className="relative flex items-center gap-2">
+          <div className="relative">
             <button
               onClick={handleClearChat}
               disabled={messages.length === 0}
-              className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
-              title="Clear chat"
+              className="absolute left-3 top-[45%] -translate-y-1/2 text-gray-400 hover:text-gray-500 focus:outline-none disabled:opacity-50"
+              title="Reset conversation"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -228,8 +228,7 @@ export default function Home() {
                 className="h-5 w-5"
                 strokeWidth={2}
               >
-                <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                <path d="M15 12H9" />
+                <path d="M2.5 2v6h6M2.66 15.57a10 10 0 1 0-0.44-8.49" />
               </svg>
             </button>
             <textarea
@@ -237,14 +236,14 @@ export default function Home() {
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Type your message here..."
-              className="w-full resize-none rounded-lg border border-gray-300 bg-white px-4 py-2 pr-16 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="w-full resize-none rounded-lg border border-gray-300 bg-white pl-12 pr-16 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               rows={1}
               disabled={isThinking}
             />
             <button
               onClick={() => handleSendMessage(inputValue)}
               disabled={isThinking || !inputValue.trim()}
-              className="absolute right-2 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
+              className="absolute right-2 top-[45%] -translate-y-1/2 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
             >
               Send
             </button>
