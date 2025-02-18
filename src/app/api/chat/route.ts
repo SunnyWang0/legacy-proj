@@ -19,7 +19,8 @@ export async function POST(request: Request) {
             role: "user",
             content: message
           }
-        ]
+        ],
+        stream: true
       }),
     });
 
@@ -27,8 +28,40 @@ export async function POST(request: Request) {
       throw new Error('Failed to get AI response');
     }
 
-    const data = await response.json();
-    return NextResponse.json({ response: data.response });
+    // Create a TransformStream to process the response
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+    const transformStream = new TransformStream({
+      async transform(chunk, controller) {
+        const text = decoder.decode(chunk);
+        const lines = text.split('\n').filter(line => line.trim());
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              return;
+            }
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices[0]?.delta?.content || '';
+              if (content) {
+                controller.enqueue(encoder.encode(content));
+              }
+            } catch (error) {
+              console.error('Error parsing chunk:', error);
+            }
+          }
+        }
+      }
+    });
+
+    return new Response(response.body?.pipeThrough(transformStream), {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Transfer-Encoding': 'chunked',
+      },
+    });
 
   } catch (error) {
     console.error('Error:', error);
