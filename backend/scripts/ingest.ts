@@ -2,6 +2,11 @@ import fs from 'fs';
 import path from 'path';
 import { parse } from 'csv-parse/sync';
 
+interface CSVRecord {
+  Context: string;
+  Response: string;
+}
+
 async function ingestData() {
   try {
     // Read the CSV file
@@ -12,17 +17,23 @@ async function ingestData() {
     const records = parse(fileContent, {
       columns: true,
       skip_empty_lines: true
-    });
+    }) as CSVRecord[];
+
+    // Transform the records to match the expected format
+    const transformedRecords = records.map((record: CSVRecord) => ({
+      context: record.Context,
+      response: record.Response
+    }));
 
     // Send the data to the ingest endpoint in batches
     const BATCH_SIZE = 50;
     const API_URL = process.env.API_URL || 'http://localhost:8787';
     
-    console.log(`Found ${records.length} records to process`);
+    console.log(`Found ${transformedRecords.length} records to process`);
     
-    for (let i = 0; i < records.length; i += BATCH_SIZE) {
-      const batch = records.slice(i, Math.min(i + BATCH_SIZE, records.length));
-      console.log(`Processing batch ${i / BATCH_SIZE + 1} of ${Math.ceil(records.length / BATCH_SIZE)}`);
+    for (let i = 0; i < transformedRecords.length; i += BATCH_SIZE) {
+      const batch = transformedRecords.slice(i, Math.min(i + BATCH_SIZE, transformedRecords.length));
+      console.log(`Processing batch ${i / BATCH_SIZE + 1} of ${Math.ceil(transformedRecords.length / BATCH_SIZE)}`);
       
       try {
         const response = await fetch(`${API_URL}/api/ingest`, {
