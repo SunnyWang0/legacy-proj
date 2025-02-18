@@ -150,10 +150,10 @@ export default function Home() {
         {messages.length === 0 ? (
           <div className="mx-auto max-w-2xl rounded-lg bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-xl font-medium text-gray-800">
-              Welcome to Your Mental Health Assistant
+              Welcome to Your Therapy Assistant
             </h2>
             <p className="mb-6 text-gray-600">
-              I&apos;m here to listen and support you. How can I help you today?
+              Tell me about a patient you want to help.
             </p>
             <div className="space-y-2">
               {[
