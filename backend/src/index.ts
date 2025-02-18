@@ -57,34 +57,56 @@ export default {
 			try {
 				const { entries } = await request.json() as { entries: Array<{ context: string; response: string }> };
 				
-				// Process entries in batches to avoid overwhelming the system
-				const BATCH_SIZE = 100;
-				for (let i = 0; i < entries.length; i += BATCH_SIZE) {
-					const batch = entries.slice(i, i + BATCH_SIZE);
+				if (!Array.isArray(entries) || entries.length === 0) {
+					return new Response(JSON.stringify({ error: 'Invalid entries format or empty array' }), {
+						status: 400,
+						headers: { 'Content-Type': 'application/json' }
+					});
+				}
+
+				console.log(`Processing ${entries.length} entries...`);
+				
+				try {
 					const vectors = await Promise.all(
-						batch.map(async (entry, index) => {
-							const contextEmbedding = await getEmbeddings(entry.context, env);
-							return {
-								id: `entry-${i + index}`,
-								values: contextEmbedding,
-								metadata: {
-									context: entry.context,
-									response: entry.response
-								}
-							};
+						entries.map(async (entry, index) => {
+							try {
+								const contextEmbedding = await getEmbeddings(entry.context, env);
+								return {
+									id: `entry-${Date.now()}-${index}`,
+									values: contextEmbedding,
+									metadata: {
+										context: entry.context,
+										response: entry.response
+									}
+								};
+							} catch (error) {
+								console.error('Error generating embedding:', error);
+								throw new Error(error instanceof Error ? error.message : 'Unknown error generating embedding');
+							}
 						})
 					);
 					
 					await env.VECTORIZE_DB.upsert(vectors);
+					console.log(`Successfully processed ${entries.length} entries`);
+					
+					return new Response(JSON.stringify({ success: true, count: entries.length }), {
+						headers: { 'Content-Type': 'application/json' }
+					});
+				} catch (error) {
+					console.error('Error processing vectors:', error);
+					return new Response(JSON.stringify({ 
+						error: `Error processing vectors: ${error instanceof Error ? error.message : 'Unknown error'}`
+					}), {
+						status: 500,
+						headers: { 'Content-Type': 'application/json' }
+					});
 				}
-				
-				return new Response(JSON.stringify({ success: true }), {
-					headers: { 'Content-Type': 'application/json' }
-				});
 			} catch (error) {
-				console.error('Error ingesting data:', error);
-				return new Response(JSON.stringify({ error: 'Failed to ingest data' }), {
-					status: 500,
+				console.error('Error parsing request:', error);
+				return new Response(JSON.stringify({ 
+					error: `Error parsing request: ${error instanceof Error ? error.message : 'Invalid request format'}`
+				}), {
+					status: 400,
 					headers: { 'Content-Type': 'application/json' }
 				});
 			}
