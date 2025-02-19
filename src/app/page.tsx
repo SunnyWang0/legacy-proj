@@ -154,18 +154,21 @@ export default function Home() {
   return (
     <div className="flex h-screen flex-col bg-gray-50">
       {/* Header */}
-      <header className="border-b border-gray-200 bg-white px-4 py-4 shadow-sm">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-800">Clinical Consultation Assistant</h1>
-          <p className="text-sm text-gray-600">Professional Mental Health Support</p>
+      <header className="border-b border-[#42A573] bg-white px-4 py-4 shadow-sm">
+        <div className="flex items-center space-x-4">
+          <img src="/logo.png" alt="Legacy Logo" className="h-8 w-auto" />
+          <div>
+            <h1 className="text-xl font-semibold text-[#42A573]">Clinical Consultation Assistant</h1>
+            <p className="text-sm text-gray-600">Professional Mental Health Support</p>
+          </div>
         </div>
       </header>
 
       {/* Chat Messages */}
       <div className="flex-1 overflow-y-auto p-4">
         {messages.length === 0 ? (
-          <div className="mx-auto max-w-2xl rounded-lg bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-xl font-medium text-gray-800">
+          <div className="mx-auto max-w-2xl rounded-lg bg-white p-6 shadow-sm border border-[#42A573]/20">
+            <h2 className="mb-4 text-xl font-medium text-[#42A573]">
               Welcome to Your Clinical Consultation Assistant
             </h2>
             <p className="mb-6 text-gray-600">
@@ -180,7 +183,7 @@ export default function Home() {
                 <button
                   key={index}
                   onClick={() => handleSendMessage(suggestion)}
-                  className="block w-full rounded-lg bg-gray-100 px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-200"
+                  className="block w-full rounded-lg bg-[#42A573]/5 px-4 py-3 text-left text-gray-700 transition-colors hover:bg-[#42A573]/10 border border-[#42A573]/20"
                 >
                   {suggestion}
                 </button>
@@ -197,14 +200,14 @@ export default function Home() {
                 <div
                   className={`max-w-[80%] rounded-lg px-4 py-2 ${
                     message.isUser
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-800 shadow-sm'
+                      ? 'bg-[#42A573] text-white'
+                      : 'bg-white text-gray-800 shadow-sm border border-[#42A573]/20'
                   }`}
                 >
                   <p>{message.text}</p>
                   <span
                     className={`mt-1 block text-xs ${
-                      message.isUser ? 'text-blue-100' : 'text-gray-500'
+                      message.isUser ? 'text-white/80' : 'text-gray-500'
                     }`}
                   >
                     {message.timestamp.toLocaleTimeString()}
@@ -214,10 +217,10 @@ export default function Home() {
             ))}
             {isThinking && (
               <div className="flex justify-start">
-                <div className="flex space-x-2 rounded-lg bg-white px-4 py-3 shadow-sm">
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400" />
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400 delay-100" />
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400 delay-200" />
+                <div className="flex space-x-2 rounded-lg bg-white px-4 py-3 shadow-sm border border-[#42A573]/20">
+                  <div className="h-2 w-2 animate-bounce rounded-full bg-[#42A573]" />
+                  <div className="h-2 w-2 animate-bounce rounded-full bg-[#42A573] delay-100" />
+                  <div className="h-2 w-2 animate-bounce rounded-full bg-[#42A573] delay-200" />
                 </div>
               </div>
             )}
@@ -227,13 +230,13 @@ export default function Home() {
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-gray-200 bg-white p-4">
+      <div className="border-t border-[#42A573]/20 bg-white p-4">
         <div className="mx-auto max-w-2xl">
           <div className="relative">
             <button
               onClick={handleClearChat}
               disabled={messages.length === 0}
-              className="absolute left-3 top-[45%] -translate-y-1/2 text-gray-400 hover:text-gray-500 focus:outline-none disabled:opacity-50"
+              className="absolute left-3 top-[45%] -translate-y-1/2 text-gray-400 hover:text-[#42A573] focus:outline-none disabled:opacity-50"
               title="Reset conversation"
             >
               <svg
@@ -252,14 +255,14 @@ export default function Home() {
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Type your message here..."
-              className="w-full resize-none rounded-lg border border-gray-300 bg-white pl-12 pr-16 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="w-full resize-none rounded-lg border border-[#42A573]/20 bg-white pl-12 pr-16 py-2 text-gray-900 placeholder-gray-500 focus:border-[#42A573] focus:outline-none focus:ring-2 focus:ring-[#42A573]/20"
               rows={1}
               disabled={isThinking}
             />
             <button
               onClick={() => handleSendMessage(inputValue)}
               disabled={isThinking || !inputValue.trim()}
-              className="absolute right-2 top-[45%] -translate-y-1/2 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
+              className="absolute right-2 top-[45%] -translate-y-1/2 rounded-md bg-[#42A573] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#42A573]/90 disabled:bg-gray-400"
             >
               Send
             </button>
