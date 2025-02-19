@@ -17,7 +17,12 @@ interface AIModel {
 
 interface Vectorize {
 	insert(vectors: Array<{ id: string; values: number[]; metadata: Record<string, string> }>): Promise<void>;
-	query(vector: number[], topK: number): Promise<Array<{ id: string; score: number; metadata: Record<string, string> }>>;
+	query(vector: number[], options: { 
+		topK: number; 
+		filter: Record<string, string | number | boolean | Record<string, string | number | boolean>>; 
+		returnValues: boolean; 
+		returnMetadata: string 
+	}): Promise<{ matches: Array<{ id: string; score: number; metadata: Record<string, string> }> }>;
 	upsert(vectors: Array<{ id: string; values: number[]; metadata: Record<string, string> }>): Promise<void>;
 	getByIds(ids: string[]): Promise<Array<{ id: string; values: number[]; metadata: Record<string, string> }>>;
 }
@@ -50,32 +55,23 @@ async function searchRelevantContext(query: string, env: Env): Promise<string> {
 		// Generate embeddings for the query
 		const queryEmbedding = await getEmbeddings(query, env);
 		
-		// Search the vector database for similar contexts
-		const results = await env.VECTORIZE_DB.query(queryEmbedding, 2);
-		console.log("RESULTS", results);
+		// Search the vector database for similar contexts with metadata
+		const results = await env.VECTORIZE_DB.query(queryEmbedding, {
+			topK: 2,
+			filter: {},
+			returnValues: false,
+			returnMetadata: 'all'
+		});
 		
-		// Fetch the complete entries using the IDs
-		if (Array.isArray(results) && results.length > 0) {
-			const ids = results.map(result => result.id);
-			const entries = await env.VECTORIZE_DB.getByIds(ids);
-			
-			// Map scores to entries
-			const entriesWithScores = entries.map(entry => {
-				const matchingResult = results.find(r => r.id === entry.id);
-				return {
-					...entry,
-					score: matchingResult?.score || 0
-				};
-			});
-			
+		if (results.matches && results.matches.length > 0) {
 			console.log('\nRetrieved similar cases:');
-			entriesWithScores.forEach((entry, index) => {
-				console.log(`\n[Case ${index + 1}] Similarity: ${(entry.score * 100).toFixed(1)}%`);
-				console.log('Context:', entry.metadata.context);
+			results.matches.forEach((match: { score: number; metadata: Record<string, string> }, index: number) => {
+				console.log(`\n[Case ${index + 1}] Similarity: ${(match.score * 100).toFixed(1)}%`);
+				console.log('Context:', match.metadata.context);
 			});
 			
 			// Combine the relevant contexts
-			return entriesWithScores.map(entry => entry.metadata.context).join('\n\n');
+			return results.matches.map((match: { metadata: Record<string, string> }) => match.metadata.context).join('\n\n');
 		}
 		
 		return '';
