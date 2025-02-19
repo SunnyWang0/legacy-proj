@@ -1,86 +1,158 @@
 import { NextResponse } from 'next/server';
 
+// Update this to match your deployed worker URL
+const WORKER_URL = "https://backend.unleashai-inquiries.workers.dev";
+
 export async function POST(request: Request) {
   try {
     const { messages } = await request.json();
+    
+    console.log('Received messages:', JSON.stringify(messages, null, 2));
 
-    const response = await fetch("https://backend.unleashai-inquiries.workers.dev/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ messages }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to get AI response');
+    if (!messages || !Array.isArray(messages)) {
+      console.error('Invalid messages format received:', messages);
+      return NextResponse.json(
+        { error: 'Invalid messages format' },
+        { status: 400 }
+      );
     }
 
-    // Set up streaming response
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      async start(controller) {
-        const reader = response.body?.getReader();
-        if (!reader) throw new Error('No reader available');
+    if (messages.length === 0) {
+      console.error('Empty messages array received');
+      return NextResponse.json(
+        { error: 'Messages array cannot be empty' },
+        { status: 400 }
+      );
+    }
 
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) {
-              console.log('Stream completed');
-              controller.close();
-              break;
-            }
+    try {
+      const response = await fetch(`${WORKER_URL}/api/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ messages }),
+      });
 
-            const text = new TextDecoder().decode(value);
-            const lines = text.split('\n');
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Backend API error:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText,
+          url: response.url,
+          messages: messages // Log the messages being sent
+        });
 
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                try {
-                  const rawData = line.slice(6);
-                  // Try to parse the data and extract the text
-                  const parsed = JSON.parse(rawData);
-                  // Ensure we're forwarding a proper text string
-                  let textContent = '';
-                  if (typeof parsed.text === 'string') {
-                    textContent = parsed.text;
-                  } else if (parsed.text?.response) {
-                    textContent = parsed.text.response;
-                  } else if (typeof parsed.response === 'string') {
-                    textContent = parsed.response;
+        // Return a more informative error
+        return NextResponse.json(
+          { 
+            error: 'Backend API error', 
+            details: errorText,
+            status: response.status,
+            statusText: response.statusText
+          },
+          { status: response.status }
+        );
+      }
+
+      // Verify the response has a body
+      if (!response.body) {
+        throw new Error('Response body is null');
+      }
+
+      // Set up streaming response
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        async start(controller) {
+          const reader = response.body.getReader();
+
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) {
+                controller.close();
+                break;
+              }
+
+              const text = new TextDecoder().decode(value);
+              const lines = text.split('\n');
+
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  try {
+                    const rawData = line.slice(6);
+                    const parsed = JSON.parse(rawData);
+                    
+                    // Ensure we're forwarding a proper text string
+                    let textContent = '';
+                    if (typeof parsed.text === 'string') {
+                      textContent = parsed.text;
+                    } else if (parsed.text?.response) {
+                      textContent = parsed.text.response;
+                    } else if (typeof parsed.response === 'string') {
+                      textContent = parsed.response;
+                    }
+                    
+                    // Forward the properly formatted SSE data
+                    if (textContent) {
+                      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: textContent })}\n\n`));
+                    }
+                  } catch (e) {
+                    console.error('Error processing SSE data:', e, 'Raw data:', line);
+                    // Don't throw here, try to continue processing
                   }
-                  
-                  // Forward the properly formatted SSE data
-                  if (textContent) {
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: textContent })}\n\n`));
-                  }
-                } catch (e) {
-                  console.error('Error processing SSE data:', e, 'Raw line:', line);
                 }
               }
             }
+          } catch (error) {
+            console.error('Stream processing error:', error);
+            controller.error(error);
           }
-        } catch (error) {
-          console.error('Stream processing error:', error);
-          controller.error(error);
         }
-      }
-    });
+      });
 
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
-    });
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type'
+        },
+      });
+
+    } catch (fetchError) {
+      console.error('Fetch error:', fetchError);
+      return NextResponse.json(
+        { 
+          error: 'Failed to communicate with backend',
+          details: fetchError instanceof Error ? fetchError.message : 'Unknown fetch error'
+        },
+        { status: 502 }
+      );
+    }
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error('API route error:', error);
     return NextResponse.json(
-      { error: 'Failed to process request' },
+      { 
+        error: 'Failed to process request', 
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }
+}
+
+// Add OPTIONS handler for CORS preflight requests
+export async function OPTIONS() {
+  return new Response(null, {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    }
+  });
 } 

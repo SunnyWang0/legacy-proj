@@ -51,7 +51,10 @@ export default function Home() {
       role: 'user',
       content: message
     };
-    setChatHistory(prev => [...prev, userMessage]);
+    
+    // Create new chat history with the user's message
+    const updatedChatHistory = [...chatHistory, userMessage];
+    setChatHistory(updatedChatHistory);
 
     // Add a placeholder message for the AI response
     const placeholderMessage = {
@@ -68,12 +71,18 @@ export default function Home() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          messages: chatHistory
+          messages: updatedChatHistory // Use the updated chat history
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get response');
+        const errorData = await response.json();
+        console.error('API Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorData
+        });
+        throw new Error(errorData.details || 'Failed to get response');
       }
 
       const reader = response.body?.getReader();
@@ -198,15 +207,37 @@ export default function Home() {
                 className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                  className={`max-w-[80%] rounded-lg px-6 py-4 ${
                     message.isUser
                       ? 'bg-[#42A573] text-white'
                       : 'bg-white text-gray-800 shadow-sm border border-[#42A573]/20'
                   }`}
                 >
-                  <p>{message.text}</p>
+                  <div className="prose prose-sm max-w-none">
+                    <div className="whitespace-pre-wrap">
+                      {message.text.split('**').map((part, i) => {
+                        // Every odd index is bold text
+                        if (i % 2 === 1) {
+                          return <strong key={i} className={message.isUser ? 'text-white' : 'text-gray-900'}>{part}</strong>;
+                        }
+                        // Split numbered lists and add proper formatting
+                        return part.split('\n').map((line, lineIndex) => {
+                          const numberedListMatch = line.match(/^\d+\.\s+(.*)/);
+                          if (numberedListMatch) {
+                            return (
+                              <div key={`${i}-${lineIndex}`} className="flex gap-2 mt-1">
+                                <span className="flex-shrink-0">{line.split('.')[0]}.</span>
+                                <span>{numberedListMatch[1]}</span>
+                              </div>
+                            );
+                          }
+                          return <div key={`${i}-${lineIndex}`}>{line}</div>;
+                        });
+                      })}
+                    </div>
+                  </div>
                   <span
-                    className={`mt-1 block text-xs ${
+                    className={`mt-3 block text-xs ${
                       message.isUser ? 'text-white/80' : 'text-gray-500'
                     }`}
                   >
