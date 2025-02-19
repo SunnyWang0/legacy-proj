@@ -220,19 +220,22 @@ export default function Home() {
                         if (i % 2 === 1) {
                           return <strong key={i} className={message.isUser ? 'text-white' : 'text-gray-900'}>{part}</strong>;
                         }
-                        // Split numbered lists and add proper formatting
+                        // Process the text content
                         return part.split('\n').map((line, lineIndex) => {
-                          const numberedListMatch = line.match(/^\d+\.\s+(.*)/);
+                          const numberedListMatch = line.match(/^(\d+)\.\s+(.*)/);
                           if (numberedListMatch) {
                             return (
-                              <div key={`${i}-${lineIndex}`} className="flex gap-2 mt-1">
-                                <span className="flex-shrink-0">{line.split('.')[0]}.</span>
-                                <span>{numberedListMatch[1]}</span>
+                              <div key={`${i}-${lineIndex}`} className="flex items-start gap-2">
+                                <span className="flex-shrink-0 font-medium">{numberedListMatch[1]}.</span>
+                                <span className="flex-1">{numberedListMatch[2]}</span>
                               </div>
                             );
                           }
-                          return <div key={`${i}-${lineIndex}`}>{line}</div>;
-                        });
+                          // Only add a div for non-empty lines
+                          return line.trim() ? (
+                            <div key={`${i}-${lineIndex}`} className="mb-1 last:mb-0">{line}</div>
+                          ) : null;
+                        }).filter(Boolean);
                       })}
                     </div>
                   </div>
