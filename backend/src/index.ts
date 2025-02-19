@@ -52,6 +52,7 @@ async function searchRelevantContext(query: string, env: Env): Promise<string> {
 		
 		// Search the vector database for similar contexts
 		const results = await env.VECTORIZE_DB.query(queryEmbedding, 2);
+		console.log("RESULTS", results);
 		
 		// Fetch the complete entries using the IDs
 		if (Array.isArray(results) && results.length > 0) {
@@ -171,6 +172,8 @@ export default {
 								4. Maintain professional boundaries and emphasize the importance of clinical judgment
 								5. Highlight any potential red flags or areas requiring immediate attention
 								6. Suggest evidence-based therapeutic approaches when appropriate
+								7. Be concise and to the point.
+								8. Keep your response under 100 words.
 
 								Here is some relevant context from similar cases to consider:
 								${relevantContext}
@@ -179,7 +182,8 @@ export default {
 								- Frame suggestions as professional recommendations rather than direct patient advice
 								- Encourage appropriate referrals when cases exceed your scope
 								- Maintain patient confidentiality and privacy
-								- Emphasize that your suggestions should be evaluated within the therapist's clinical judgment`
+								- Emphasize that your suggestions should be evaluated within the therapist's clinical judgment
+								- Keep your response under 100 words.`
 					});
 				}
 
