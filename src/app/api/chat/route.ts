@@ -6,11 +6,8 @@ const WORKER_URL = "https://backend.unleashai-inquiries.workers.dev";
 export async function POST(request: Request) {
   try {
     const { messages } = await request.json();
-    
-    console.log('Received messages:', JSON.stringify(messages, null, 2));
 
     if (!messages || !Array.isArray(messages)) {
-      console.error('Invalid messages format received:', messages);
       return NextResponse.json(
         { error: 'Invalid messages format' },
         { status: 400 }
@@ -18,7 +15,6 @@ export async function POST(request: Request) {
     }
 
     if (messages.length === 0) {
-      console.error('Empty messages array received');
       return NextResponse.json(
         { error: 'Messages array cannot be empty' },
         { status: 400 }
@@ -36,15 +32,6 @@ export async function POST(request: Request) {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Backend API error:', {
-          status: response.status,
-          statusText: response.statusText,
-          body: errorText,
-          url: response.url,
-          messages: messages // Log the messages being sent
-        });
-
-        // Return a more informative error
         return NextResponse.json(
           { 
             error: 'Backend API error', 
@@ -65,7 +52,7 @@ export async function POST(request: Request) {
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
         async start(controller) {
-          const reader = response.body.getReader();
+          const reader = (response.body as ReadableStream).getReader();
 
           try {
             while (true) {
@@ -98,15 +85,14 @@ export async function POST(request: Request) {
                     if (textContent) {
                       controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: textContent })}\n\n`));
                     }
-                  } catch (e) {
-                    console.error('Error processing SSE data:', e, 'Raw data:', line);
-                    // Don't throw here, try to continue processing
+                  } catch {
+                    // Silently continue on parse errors
+                    continue;
                   }
                 }
               }
             }
           } catch (error) {
-            console.error('Stream processing error:', error);
             controller.error(error);
           }
         }
@@ -124,7 +110,6 @@ export async function POST(request: Request) {
       });
 
     } catch (fetchError) {
-      console.error('Fetch error:', fetchError);
       return NextResponse.json(
         { 
           error: 'Failed to communicate with backend',
@@ -135,7 +120,6 @@ export async function POST(request: Request) {
     }
 
   } catch (error) {
-    console.error('API route error:', error);
     return NextResponse.json(
       { 
         error: 'Failed to process request', 

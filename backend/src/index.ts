@@ -51,7 +51,14 @@ async function searchRelevantContext(query: string, env: Env): Promise<string> {
 		const queryEmbedding = await getEmbeddings(query, env);
 		
 		// Search the vector database for similar contexts
-		const results = await env.VECTORIZE_DB.query(queryEmbedding, 3);
+		const results = await env.VECTORIZE_DB.query(queryEmbedding, 2);
+		
+		// Log only the RAG contexts with their scores
+		console.log('\nRetrieved similar cases:');
+		results.forEach((result, index) => {
+			console.log(`\n[Case ${index + 1}] Similarity: ${(result.score * 100).toFixed(1)}%`);
+			console.log('Context:', result.metadata.context);
+		});
 		
 		// Combine the relevant contexts
 		const contexts = results.map(result => result.metadata.context).join('\n\n');
@@ -73,51 +80,36 @@ export default {
 		// Handle vector database ingestion
 		if (url.pathname === '/api/ingest') {
 			try {
-				console.log('Starting ingest process...');
 				const { entries } = await request.json() as { entries: Array<{ context: string; response: string }> };
 				
 				if (!Array.isArray(entries) || entries.length === 0) {
-					console.error('Invalid entries format:', entries);
 					return new Response(JSON.stringify({ error: 'Invalid entries format or empty array' }), {
 						status: 400,
 						headers: { 'Content-Type': 'application/json' }
 					});
 				}
 
-				console.log(`Processing ${entries.length} entries...`);
-				
 				try {
-					console.log('Starting to generate embeddings...');
 					const vectors = await Promise.all(
 						entries.map(async (entry, index) => {
-							try {
-								console.log(`Generating embedding for entry ${index}...`);
-								const contextEmbedding = await getEmbeddings(entry.context, env);
-								console.log(`Successfully generated embedding for entry ${index}`);
-								return {
-									id: `entry-${Date.now()}-${index}`,
-									values: contextEmbedding,
-									metadata: {
-										context: entry.context,
-										response: entry.response
-									}
-								};
-							} catch (error) {
-								console.error(`Error generating embedding for entry ${index}:`, error);
-								throw new Error(error instanceof Error ? error.message : 'Unknown error generating embedding');
-							}
+							const contextEmbedding = await getEmbeddings(entry.context, env);
+							return {
+								id: `entry-${Date.now()}-${index}`,
+								values: contextEmbedding,
+								metadata: {
+									context: entry.context,
+									response: entry.response
+								}
+							};
 						})
 					);
 					
-					console.log('All embeddings generated, upserting to vectorize...');
 					await env.VECTORIZE_DB.upsert(vectors);
-					console.log(`Successfully processed ${entries.length} entries`);
 					
 					return new Response(JSON.stringify({ success: true, count: entries.length }), {
 						headers: { 'Content-Type': 'application/json' }
 					});
 				} catch (error) {
-					console.error('Error processing vectors:', error);
 					return new Response(JSON.stringify({ 
 						error: `Error processing vectors: ${error instanceof Error ? error.message : 'Unknown error'}`
 					}), {
@@ -126,7 +118,6 @@ export default {
 					});
 				}
 			} catch (error) {
-				console.error('Error parsing request:', error);
 				return new Response(JSON.stringify({ 
 					error: `Error parsing request: ${error instanceof Error ? error.message : 'Invalid request format'}`
 				}), {
@@ -194,13 +185,9 @@ export default {
 							while (true) {
 								const { done, value } = await reader.read();
 								if (done) {
-									console.log('Stream completed');
 									await writer.close();
 									break;
 								}
-								
-								// Debug the incoming value
-								console.log('Received chunk:', value);
 								
 								// Ensure we have the correct structure and handle it properly
 								let textChunk = '';
@@ -230,22 +217,18 @@ export default {
 												textChunk = parsed.text;
 											}
 										}
-									} catch (e) {
-										console.error('Error decoding chunk:', e);
+									} catch {
 										continue;
 									}
 								}
 
 								if (textChunk) {
-									// Format the SSE data properly
 									const sseData = `data: ${JSON.stringify({ text: textChunk })}\n\n`;
-									console.log('Sending text chunk:', textChunk);
 									await writer.write(new TextEncoder().encode(sseData));
 								}
 							}
-						} catch (error) {
-							console.error('Streaming error:', error);
-							await writer.abort(error);
+						} catch {
+							await writer.abort();
 						}
 					})();
 
@@ -267,7 +250,6 @@ export default {
 					throw new Error('Unexpected response format from chat model');
 				}
 			} catch (error) {
-				console.error('Error:', error);
 				return new Response(JSON.stringify({ error: 'Failed to process request' }), {
 					status: 500,
 					headers: {
