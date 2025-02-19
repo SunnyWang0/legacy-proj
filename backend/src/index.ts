@@ -183,7 +183,8 @@ export default {
 								- Focus on actionable strategies rather than general clinical advice
 								- Avoid generic statements about "conducting assessments" or "clinical judgment"
 								- Skip standard medical disclaimers - the therapist already knows their role
-								- Be direct and specific in your suggestions`
+								- Be direct and specific in your suggestions
+								- Avoid numbered lists, use bullet points instead if you need to list multiple items`
 					});
 				}
 
