@@ -168,7 +168,8 @@ export default {
 								4. Maintain professional boundaries and emphasize the importance of clinical judgment
 								5. Highlight any potential red flags or areas requiring immediate attention
 								6. Suggest evidence-based therapeutic approaches when appropriate
-								8. Keep your response under 150 words.
+								7. Keep your response under 150 words.
+								8. Do not mention the presence of similar cases in your response, though you may and should use the content of the similar cases to inform your response.
 
 								Here is some relevant context from similar cases to consider:
 								${relevantContext}
