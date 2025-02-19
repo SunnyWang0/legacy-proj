@@ -32,6 +32,30 @@ function truncateText(text: string, maxBytes: number): string {
   return result.trim();
 }
 
+// Function to retry failed requests
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3): Promise<Response> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      if (attempt === maxRetries) throw error;
+      
+      console.log(`Attempt ${attempt} failed, retrying in ${attempt * 2} seconds...`);
+      await new Promise(resolve => setTimeout(resolve, attempt * 2000));
+    }
+  }
+  throw new Error('All retry attempts failed');
+}
+
 async function ingestData() {
   try {
     // Read the CSV file
@@ -53,7 +77,7 @@ async function ingestData() {
     // Send the data to the ingest endpoint in batches
     const BATCH_SIZE = 5;
     const API_URL = 'https://backend.unleashai-inquiries.workers.dev';
-    const START_BATCH = 498; // Start from the failed batch
+    const START_BATCH = 599; // Start from the failed batch
     
     console.log(`Found ${transformedRecords.length} records to process`);
     console.log(`Starting from batch ${START_BATCH}`);
@@ -65,14 +89,14 @@ async function ingestData() {
       
       // Truncate long texts to fit within metadata limits
       const processedBatch = batch.map(entry => ({
-        context: truncateText(entry.context, 4000), // Allow room for both context and response
+        context: truncateText(entry.context, 4000),
         response: truncateText(entry.response, 4000)
       }));
       
       console.log('First entry in batch:', JSON.stringify(processedBatch[0], null, 2));
       
       try {
-        const response = await fetch(`${API_URL}/api/ingest`, {
+        const response = await fetchWithRetry(`${API_URL}/api/ingest`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -91,8 +115,8 @@ async function ingestData() {
         
         console.log(`Successfully processed batch ${currentBatch}`);
         
-        // Add a small delay between batches to avoid overwhelming the server
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Add a longer delay between batches to avoid overwhelming the server
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Increased to 2 seconds
       } catch (error) {
         console.error(`Error processing batch ${currentBatch}:`, error);
         process.exit(1);
