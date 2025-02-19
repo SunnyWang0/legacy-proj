@@ -156,7 +156,7 @@ export default function Home() {
       {/* Header */}
       <header className="border-b border-[#42A573] bg-white px-4 py-4 shadow-sm">
         <div className="flex items-center space-x-4">
-          <img src="/logo.png" alt="Legacy Logo" className="h-8 w-auto" />
+          <img src="/logo.png" alt="Legacy Logo" className="h-12 w-auto" />
           <div>
             <h1 className="text-xl font-semibold text-[#42A573]">Clinical Consultation Assistant</h1>
             <p className="text-sm text-gray-600">Professional Mental Health Support</p>
