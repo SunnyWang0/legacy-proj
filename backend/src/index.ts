@@ -44,6 +44,24 @@ async function getEmbeddings(text: string, env: Env): Promise<number[]> {
 	throw new Error('Unexpected response format from embedding model');
 }
 
+// Function to search for relevant context
+async function searchRelevantContext(query: string, env: Env): Promise<string> {
+	try {
+		// Generate embeddings for the query
+		const queryEmbedding = await getEmbeddings(query, env);
+		
+		// Search the vector database for similar contexts
+		const results = await env.VECTORIZE_DB.query(queryEmbedding, 3);
+		
+		// Combine the relevant contexts
+		const contexts = results.map(result => result.metadata.context).join('\n\n');
+		return contexts;
+	} catch (error) {
+		console.error('Error searching for relevant context:', error);
+		return '';
+	}
+}
+
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
 		if (request.method !== 'POST') {
@@ -130,13 +148,40 @@ export default {
 					throw new Error('Invalid messages format');
 				}
 
+				// Get the user's latest message
+				const userMessage = messages[messages.length - 1].content;
+				
+				// Search for relevant context using RAG
+				const relevantContext = await searchRelevantContext(userMessage, env);
+
 				// Ensure the first message is a system prompt
 				if (messages[0].role !== 'system') {
 					messages.unshift({
 						role: 'system',
-						content: 'You are a helpful and empathetic mental health assistant. Provide supportive and constructive responses while maintaining appropriate boundaries and encouraging professional help when necessary.'
+						content: `You are an AI assistant designed to help mental health professionals provide better care to their patients. Your role is to:
+1. Analyze the therapist's description of their patient's situation
+2. Consider the relevant historical context and similar cases provided
+3. Provide specific, actionable suggestions for how to help the patient
+4. Maintain professional boundaries and emphasize the importance of clinical judgment
+5. Highlight any potential red flags or areas requiring immediate attention
+6. Suggest evidence-based therapeutic approaches when appropriate
+
+Here is some relevant context from similar cases to consider:
+${relevantContext}
+
+Remember to always:
+- Frame suggestions as professional recommendations rather than direct patient advice
+- Encourage appropriate referrals when cases exceed your scope
+- Maintain patient confidentiality and privacy
+- Emphasize that your suggestions should be evaluated within the therapist's clinical judgment`
 					});
 				}
+
+				// Add the relevant context as a system message right before the response
+				messages.push({
+					role: 'system',
+					content: `Consider these similar cases and their outcomes while formulating your response: ${relevantContext}`
+				});
 
 				const response = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
 					messages,
