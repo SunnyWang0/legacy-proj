@@ -67,11 +67,14 @@ async function searchRelevantContext(query: string, env: Env): Promise<string> {
 			console.log('\nRetrieved similar cases:');
 			results.matches.forEach((match: { score: number; metadata: Record<string, string> }, index: number) => {
 				console.log(`\n[Case ${index + 1}] Similarity: ${(match.score * 100).toFixed(1)}%`);
-				console.log('Context:', match.metadata.context);
+				console.log('Patient Context:', match.metadata.context);
+				console.log('Therapist Response:', match.metadata.response);
 			});
 			
-			// Combine the relevant contexts
-			return results.matches.map((match: { metadata: Record<string, string> }) => match.metadata.context).join('\n\n');
+			// Combine both context and response for each case
+			return results.matches.map((match: { metadata: Record<string, string> }) => 
+				`Patient Context: ${match.metadata.context}\nTherapist Response: ${match.metadata.response}`
+			).join('\n\n');
 		}
 		
 		return '';
