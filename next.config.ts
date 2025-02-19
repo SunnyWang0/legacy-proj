@@ -10,7 +10,12 @@ const nextConfig: NextConfig = {
     // Exclude the backend directory from the build
     config.watchOptions = {
       ...config.watchOptions,
-      ignored: [...(config.watchOptions?.ignored ?? []), '**/backend/**'],
+      ignored: [
+        ...(Array.isArray(config.watchOptions?.ignored) 
+          ? config.watchOptions.ignored 
+          : []),
+        '**/backend/**'
+      ],
     };
     return config;
   },
