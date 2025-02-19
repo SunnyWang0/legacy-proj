@@ -175,7 +175,7 @@ export default {
 								7. Focus on practical, implementable suggestions rather than general advice
 								8. Do not mention the presence of similar cases in your response
 
-								Here is some relevant context from similar cases to consider:
+								Here is some relevant context from similar cases to draw solutions from. Do not mention the specific cases in your response:
 								${relevantContext}
 
 								Important guidelines:
