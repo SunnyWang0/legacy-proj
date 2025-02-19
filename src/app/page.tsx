@@ -13,14 +13,9 @@ interface ChatMessage {
   content: string;
 }
 
-const SYSTEM_PROMPT: ChatMessage = {
-  role: 'system',
-  content: 'You are a helpful and empathetic mental health assistant. Provide supportive and constructive responses while maintaining appropriate boundaries and encouraging professional help when necessary.'
-};
-
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([SYSTEM_PROMPT]);
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isThinking, setIsThinking] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -31,7 +26,7 @@ export default function Home() {
 
   const handleClearChat = () => {
     setMessages([]);
-    setChatHistory([SYSTEM_PROMPT]);
+    setChatHistory([]);
   };
 
   useEffect(() => {
@@ -161,8 +156,8 @@ export default function Home() {
       {/* Header */}
       <header className="border-b border-gray-200 bg-white px-4 py-4 shadow-sm">
         <div>
-          <h1 className="text-xl font-semibold text-gray-800">Legacy Demo Project</h1>
-          <p className="text-sm text-gray-600">Sunny Wang</p>
+          <h1 className="text-xl font-semibold text-gray-800">Clinical Consultation Assistant</h1>
+          <p className="text-sm text-gray-600">Professional Mental Health Support</p>
         </div>
       </header>
 
@@ -171,10 +166,10 @@ export default function Home() {
         {messages.length === 0 ? (
           <div className="mx-auto max-w-2xl rounded-lg bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-xl font-medium text-gray-800">
-              Welcome to Your Therapy Assistant
+              Welcome to Your Clinical Consultation Assistant
             </h2>
             <p className="mb-6 text-gray-600">
-              Tell me about a patient you want to help.
+              Describe your patient&apos;s situation and I&apos;ll help you develop effective therapeutic strategies.
             </p>
             <div className="space-y-2">
               {[
