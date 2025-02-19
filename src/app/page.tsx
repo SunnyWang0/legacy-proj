@@ -95,21 +95,17 @@ export default function Home() {
             content: accumulatedText
           };
           setChatHistory(prev => [...prev, assistantMessage]);
-          console.log('Stream completed');
           break;
         }
 
         // Decode the chunk and process it
         const text = new TextDecoder().decode(value);
-        console.log('Received text chunk:', text);
-        
         const lines = text.split('\n');
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.slice(6));
-              console.log('Parsed SSE data:', data);
               
               // Extract the text content properly
               let textContent = '';
@@ -122,9 +118,7 @@ export default function Home() {
               }
               
               if (textContent) {
-                console.log('Adding text content:', textContent);
                 accumulatedText += textContent;
-                console.log('Updated accumulated text:', accumulatedText);
                 
                 // Update the last message with the accumulated text
                 setMessages((prev) => {
