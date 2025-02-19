@@ -187,7 +187,7 @@ export default function Home() {
               {[
                 "I have a patient showing signs of treatment-resistant depression, looking for alternative approaches",
                 "Need strategies for a patient with social anxiety who's struggling with work interactions",
-                "Patient experiencing panic attacks but resistant to medication - seeking CBT techniques"
+                "Working with a patient experiencing complicated grief after losing a spouse - seeking effective coping strategies"
               ].map((suggestion, index) => (
                 <button
                   key={index}
