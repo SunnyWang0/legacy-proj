@@ -184,9 +184,9 @@ export default function Home() {
             </p>
             <div className="space-y-2">
               {[
-                "I'm feeling anxious",
-                "I need someone to talk to",
-                "Help me with stress management"
+                "I have a patient showing signs of treatment-resistant depression, looking for alternative approaches",
+                "Need strategies for a patient with social anxiety who's struggling with work interactions",
+                "Patient experiencing panic attacks but resistant to medication - seeking CBT techniques"
               ].map((suggestion, index) => (
                 <button
                   key={index}
