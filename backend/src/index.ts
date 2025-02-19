@@ -177,12 +177,6 @@ Remember to always:
 					});
 				}
 
-				// Add the relevant context as a system message right before the response
-				messages.push({
-					role: 'system',
-					content: `Consider these similar cases and their outcomes while formulating your response: ${relevantContext}`
-				});
-
 				const response = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
 					messages,
 					stream: true
