@@ -7,6 +7,31 @@ interface CSVRecord {
   Response: string;
 }
 
+// Function to truncate text while preserving meaning
+function truncateText(text: string, maxBytes: number): string {
+  const encoder = new TextEncoder();
+  if (encoder.encode(text).length <= maxBytes) return text;
+  
+  // Try to truncate at a sentence boundary
+  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+  let result = '';
+  for (const sentence of sentences) {
+    const newResult = result + sentence;
+    if (encoder.encode(newResult).length > maxBytes) break;
+    result = newResult;
+  }
+  
+  // If still too long or no sentences found, truncate at word boundary
+  if (!result || encoder.encode(result).length > maxBytes) {
+    result = text;
+    while (encoder.encode(result).length > maxBytes) {
+      result = result.substring(0, result.lastIndexOf(' '));
+    }
+  }
+  
+  return result.trim();
+}
+
 async function ingestData() {
   try {
     // Read the CSV file
@@ -26,15 +51,25 @@ async function ingestData() {
     }));
 
     // Send the data to the ingest endpoint in batches
-    const BATCH_SIZE = 5; // Further reduced batch size
+    const BATCH_SIZE = 5;
     const API_URL = 'https://backend.unleashai-inquiries.workers.dev';
+    const START_BATCH = 498; // Start from the failed batch
     
     console.log(`Found ${transformedRecords.length} records to process`);
+    console.log(`Starting from batch ${START_BATCH}`);
     
-    for (let i = 0; i < transformedRecords.length; i += BATCH_SIZE) {
+    for (let i = (START_BATCH - 1) * BATCH_SIZE; i < transformedRecords.length; i += BATCH_SIZE) {
       const batch = transformedRecords.slice(i, Math.min(i + BATCH_SIZE, transformedRecords.length));
-      console.log(`Processing batch ${i / BATCH_SIZE + 1} of ${Math.ceil(transformedRecords.length / BATCH_SIZE)}`);
-      console.log('First entry in batch:', JSON.stringify(batch[0], null, 2));
+      const currentBatch = Math.floor(i / BATCH_SIZE) + 1;
+      console.log(`Processing batch ${currentBatch} of ${Math.ceil(transformedRecords.length / BATCH_SIZE)}`);
+      
+      // Truncate long texts to fit within metadata limits
+      const processedBatch = batch.map(entry => ({
+        context: truncateText(entry.context, 4000), // Allow room for both context and response
+        response: truncateText(entry.response, 4000)
+      }));
+      
+      console.log('First entry in batch:', JSON.stringify(processedBatch[0], null, 2));
       
       try {
         const response = await fetch(`${API_URL}/api/ingest`, {
@@ -43,23 +78,23 @@ async function ingestData() {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            entries: batch
+            entries: processedBatch
           })
         });
         
         const responseText = await response.text();
-        console.log(`Server response for batch ${i / BATCH_SIZE + 1}:`, responseText);
+        console.log(`Server response for batch ${currentBatch}:`, responseText);
         
         if (!response.ok) {
           throw new Error(`Failed to ingest batch: ${responseText}`);
         }
         
-        console.log(`Successfully processed batch ${i / BATCH_SIZE + 1}`);
+        console.log(`Successfully processed batch ${currentBatch}`);
         
         // Add a small delay between batches to avoid overwhelming the server
         await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (error) {
-        console.error(`Error processing batch ${i / BATCH_SIZE + 1}:`, error);
+        console.error(`Error processing batch ${currentBatch}:`, error);
         process.exit(1);
       }
     }
