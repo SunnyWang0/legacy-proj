@@ -220,35 +220,18 @@ export default function Home() {
                         if (i % 2 === 1) {
                           return <strong key={i} className={message.isUser ? 'text-white' : 'text-gray-900'}>{part}</strong>;
                         }
-                        // Split by newlines and process each line
+                        // Split numbered lists and add proper formatting
                         return part.split('\n').map((line, lineIndex) => {
-                          // Match numbered list items with their content
-                          const numberedListMatch = line.match(/^(\d+)\.\s*([^:]+)(?::\s*(.+))?$/);
+                          const numberedListMatch = line.match(/^\d+\.\s+(.*)/);
                           if (numberedListMatch) {
-                            const [, number, title, description] = numberedListMatch;
                             return (
-                              <div key={`${i}-${lineIndex}`} className="flex mt-2">
-                                <span className="flex-shrink-0 mr-2">{number}.</span>
-                                <div className="flex-1">
-                                  <span className="font-medium">{title.trim()}</span>
-                                  {description && (
-                                    <>
-                                      <span className="mx-1">:</span>
-                                      <span className="block mt-1 text-sm">
-                                        {description.trim()}
-                                      </span>
-                                    </>
-                                  )}
-                                </div>
+                              <div key={`${i}-${lineIndex}`} className="flex gap-2 mt-1">
+                                <span className="flex-shrink-0">{line.split('.')[0]}.</span>
+                                <span>{numberedListMatch[1]}</span>
                               </div>
                             );
                           }
-                          // Return regular lines
-                          return line.trim() ? (
-                            <div key={`${i}-${lineIndex}`} className="mt-1">
-                              {line}
-                            </div>
-                          ) : null;
+                          return <div key={`${i}-${lineIndex}`}>{line}</div>;
                         });
                       })}
                     </div>
