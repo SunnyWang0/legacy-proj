@@ -32,9 +32,6 @@ export async function POST(request: Request) {
               break;
             }
 
-            // Debug the incoming chunks
-            console.log('Received chunk:', new TextDecoder().decode(value));
-
             const text = new TextDecoder().decode(value);
             const lines = text.split('\n');
 
@@ -42,12 +39,8 @@ export async function POST(request: Request) {
               if (line.startsWith('data: ')) {
                 try {
                   const rawData = line.slice(6);
-                  console.log('Raw SSE data:', rawData);
-                  
                   // Try to parse the data and extract the text
                   const parsed = JSON.parse(rawData);
-                  console.log('Parsed data structure:', parsed);
-                  
                   // Ensure we're forwarding a proper text string
                   let textContent = '';
                   if (typeof parsed.text === 'string') {
@@ -60,7 +53,6 @@ export async function POST(request: Request) {
                   
                   // Forward the properly formatted SSE data
                   if (textContent) {
-                    console.log('Forwarding text content:', textContent);
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: textContent })}\n\n`));
                   }
                 } catch (e) {
