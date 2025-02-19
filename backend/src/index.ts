@@ -53,18 +53,33 @@ async function searchRelevantContext(query: string, env: Env): Promise<string> {
 		// Search the vector database for similar contexts
 		const results = await env.VECTORIZE_DB.query(queryEmbedding, 2);
 		
-		// Log only the RAG contexts with their scores
-		console.log('\nRetrieved similar cases:');
-		results.forEach((result, index) => {
-			console.log(`\n[Case ${index + 1}] Similarity: ${(result.score * 100).toFixed(1)}%`);
-			console.log('Context:', result.metadata.context);
-		});
+		// Fetch the complete entries using the IDs
+		if (Array.isArray(results) && results.length > 0) {
+			const ids = results.map(result => result.id);
+			const entries = await env.VECTORIZE_DB.getByIds(ids);
+			
+			// Map scores to entries
+			const entriesWithScores = entries.map(entry => {
+				const matchingResult = results.find(r => r.id === entry.id);
+				return {
+					...entry,
+					score: matchingResult?.score || 0
+				};
+			});
+			
+			console.log('\nRetrieved similar cases:');
+			entriesWithScores.forEach((entry, index) => {
+				console.log(`\n[Case ${index + 1}] Similarity: ${(entry.score * 100).toFixed(1)}%`);
+				console.log('Context:', entry.metadata.context);
+			});
+			
+			// Combine the relevant contexts
+			return entriesWithScores.map(entry => entry.metadata.context).join('\n\n');
+		}
 		
-		// Combine the relevant contexts
-		const contexts = results.map(result => result.metadata.context).join('\n\n');
-		return contexts;
-	} catch (error) {
-		console.error('Error searching for relevant context:', error);
+		return '';
+	} catch {
+		// Silently handle errors and return empty context
 		return '';
 	}
 }
@@ -249,7 +264,7 @@ export default {
 				} else {
 					throw new Error('Unexpected response format from chat model');
 				}
-			} catch (error) {
+			} catch {
 				return new Response(JSON.stringify({ error: 'Failed to process request' }), {
 					status: 500,
 					headers: {
